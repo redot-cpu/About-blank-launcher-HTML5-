@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Runner — about:blank Launcher</title>
+    <style>
+        /* =========================================================
+           100% INLINE DARK-MODE STYLES (ZERO EXTERNAL DEPENDENCIES)
+           ========================================================= */
+        :root {
+            --bg-root: #090d16;
+            --bg-toolbar: #0f1624;
+            --bg-panel: #131c2e;
+            --bg-editor: #0b101b;
+            --bg-btn: #1a253c;
+            --bg-btn-hover: #243352;
+            --border: #23314d;
+            --border-bright: #354a73;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.25);
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.28);
+            --amber: #f59e0b;
+            --rose: #f43f5e;
+            --text-primary: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            background-color: var(--bg-root);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* =========================================================
+           TOP TOOLBAR
+           ========================================================= */
+        .toolbar {
+            background: var(--bg-toolbar);
+            border-bottom: 1px solid var(--border);
+            padding: 0.65rem 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            display: grid;
+            place-items: center;
+            color: #04101d;
+            box-shadow: 0 0 14px var(--accent-glow);
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+        }
+
+        .brand-text h1 {
+            font-size: 0.98rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: #fff;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .btn {
+            background: var(--bg-btn);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.48rem 0.78rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.15s ease;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--bg-btn-hover);
+            border-color: var(--border-bright);
+            color: #fff;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .btn-accent {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(56, 189, 248, 0.45);
+            color: var(--accent);
+        }
+
+        .btn-accent:hover {
+            background: rgba(56, 189, 248, 0.24);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary-launch {
+            background: linear-gradient(135deg, #059669, #10b981);
+            border: 1px solid #34d399;
+            color: #031911;
+            font-weight: 800;
+            box-shadow: 0 0 18px var(--emerald-glow);
+        }
+
+        .btn-primary-launch:hover {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #02120c;
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.45);
+        }
+
+        .btn-sm {
+            padding: 0.28rem 0.55rem;
+            font-size: 0.73rem;
+            border-radius: 6px;
+        }
+
+        /* =========================================================
+           POP-UP BLOCKER ALERT BANNER (HIDDEN BY DEFAULT)
+           ========================================================= */
+        .popup-banner {
+            display: none;
+            background: rgba(244, 63, 94, 0.14);
+            border-bottom: 1px solid rgba(244, 63, 94, 0.45);
+            color: #fecdd3;
+            padding: 0.55rem 1rem;
+            font-size: 0.8rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .popup-banner.visible {
+            display: flex;
+        }
+
+        /* =========================================================
+           SPLIT-SCREEN WORKSPACE
+           ========================================================= */
+        .workspace {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            min-height: 0;
+        }
+
+        .workspace.preview-collapsed {
+            grid-template-columns: 1fr;
+        }
+
+        .workspace.preview-collapsed .preview-pane {
+            display: none;
+        }
+
+        @media (max-width: 860px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(340px, 1fr) minmax(320px, 1fr);
+            }
+            .workspace.preview-collapsed {
+                grid-template-rows: 1fr;
+            }
+        }
+
+        .pane {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 320px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .pane-header {
+            background: rgba(15, 22, 36, 0.85);
+            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .pane-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 8px var(--emerald);
+        }
+
+        .pane-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+
+        .autosave-pill {
+            color: var(--emerald);
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 0.12rem 0.42rem;
+            border-radius: 999px;
+            font-size: 0.68rem;
+        }
+
+        .code-textarea {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-editor);
+            color: #e2e8f0;
+            border: none;
+            outline: none;
+            resize: none;
+            padding: 0.9rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.86rem;
+            line-height: 1.55;
+            tab-size: 2;
+        }
+
+        .code-textarea::placeholder {
+            color: var(--text-dim);
+        }
+
+        .preview-frame-wrap {
+            flex: 1;
+            background: #ffffff;
+            position: relative;
+            display: flex;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #ffffff;
+        }
+
+        /* =========================================================
+           TOAST NOTIFICATION
+           ========================================================= */
+        .toast {
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            background: #162035;
+            border: 1px solid var(--accent);
+            color: #f8fafc;
+            padding: 0.65rem 1rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            max-width: 90vw;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- =========================================================
+         TOP ACTION TOOLBAR
+         ========================================================= -->
+    <header class="toolbar">
+        <div class="brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>HTML5 Runner</h1>
+            </div>
+        </div>
+
+        <div class="actions">
+            <!-- Clear Editor -->
+            <button id="clearBtn" class="btn" title="Clear editor to paste your own HTML5 code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6"></path>
+                    <path d="M14 11v6"></path>
+                </svg>
+                Clear
+            </button>
+
+            <!-- Paste from Clipboard -->
+            <button id="pasteBtn" class="btn" title="Paste code from clipboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+                Paste
+            </button>
+
+            <!-- Run Inline Preview -->
+            <button id="runPreviewBtn" class="btn btn-accent" title="Toggle or update the live preview pane">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Run Preview
+            </button>
+
+            <!-- Download user's code as .html -->
+            <button id="downloadHtmlBtn" class="btn" title="Save your code as an .html file">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download .html
+            </button>
+
+            <!-- Copy data: URL Fallback -->
+            <button id="copyDataUrlBtn" class="btn" title="Copy as a standalone data:text/html URL (bypasses pop-up blockers)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy data: URL
+            </button>
+
+            <!-- Primary CTA: Open in about:blank -->
+            <button id="launchBlankBtn" class="btn btn-primary-launch" title="Launch code in a new about:blank tab (Ctrl/Cmd + Enter)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                Open in about:blank
+            </button>
+        </div>
+    </header>
+
+    <!-- =========================================================
+         POP-UP BLOCKER NOTICE BANNER
+         ========================================================= -->
+    <div id="popupBanner" class="popup-banner" role="alert">
+        <div>
+            <strong>Pop-up Blocked:</strong> Your browser blocked the <code>about:blank</code> tab. Allow pop-ups for this site in your address bar, or click <strong>Copy data: URL</strong> and paste it into a new tab!
+        </div>
+        <div style="display:flex; gap:0.4rem;">
+            <button id="bannerCopyDataBtn" class="btn btn-sm btn-accent">Copy data: URL</button>
+            <button id="dismissBannerBtn" class="btn btn-sm">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         SPLIT-SCREEN CODE EDITOR & LIVE PREVIEW WORKSPACE
+         ========================================================= -->
+    <main id="workspace" class="workspace">
+        <!-- Left Pane: HTML5 Code Editor -->
+        <section class="pane editor-pane">
+            <div class="pane-header">
+                <div class="pane-title">
+                    <span class="status-dot"></span>
+                    HTML5 Input
+                </div>
+                <div class="pane-meta">
+                    <span id="editorStats">0 lines • 0 chars</span>
+                    <span id="autoSaveBadge" class="autosave-pill">Auto-Saved</span>
+                    <button id="resetSampleBtn" class="btn btn-sm" title="Restore starter HTML5 template">Reset Sample</button>
+                </div>
+            </div>
+            <textarea
+                id="codeEditor"
+                class="code-textarea"
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+                placeholder="Paste your complete HTML5 code here, then click 'Open in about:blank' or press Ctrl/Cmd + Enter..."
+            ></textarea>
+        </section>
+
+        <!-- Right Pane: Live Sandboxed Preview -->
+        <section class="pane preview-pane">
+            <div class="pane-header">
+                <div class="pane-title">
+                    Live Preview
+                </div>
+                <div class="pane-meta">
+                    <span>Shortcut: Ctrl/Cmd + Enter</span>
+                    <button id="togglePreviewBtn" class="btn btn-sm" title="Collapse preview to expand editor">Hide Preview</button>
+                </div>
+            </div>
+            <div class="preview-frame-wrap">
+                <iframe
+                    id="previewFrame"
+                    class="preview-iframe"
+                    title="Live HTML5 Output Preview"
+                    sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin"
+                ></iframe>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hidden textarea for reliable execCommand clipboard fallback -->
+    <textarea id="clipboardFallback" style="position:fixed; left:-9999px; top:0;" aria-hidden="true"></textarea>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        (function () {
+            const STORAGE_KEY = 'html5_about_blank_runner_code_v1';
+
+            const STARTER_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>about:blank HTML5 App</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #1e293b, #090d16);
+      color: #f8fafc;
+      font-family: system-ui, sans-serif;
+      text-align: center;
+    }
+    .box {
+      padding: 2rem 2.5rem;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #38bdf8;
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      background: #10b981;
+      color: #031911;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Running in about:blank!</h1>
+    <p>Clear the editor on the left, paste your HTML5 code, and hit <strong>Open in about:blank</strong>.</p>
+    <button onclick="this.textContent = 'Clicks: ' + (++window.c || (window.c = 1))">Test Interactive JS</button>
+  </div>
+</body>
+</html>`;
+
+            const editor = document.getElementById('codeEditor');
+            const previewFrame = document.getElementById('previewFrame');
+            const editorStats = document.getElementById('editorStats');
+            const autoSaveBadge = document.getElementById('autoSaveBadge');
+            const popupBanner = document.getElementById('popupBanner');
+            const workspace = document.getElementById('workspace');
+            const toastEl = document.getElementById('toast');
+
+            let toastTimer = null;
+            let saveTimer = null;
+
+            function showToast(message, borderColor) {
+                toastEl.textContent = message;
+                toastEl.style.borderColor = borderColor || 'var(--accent)';
+                toastEl.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2800);
+            }
+
+            function copyToClipboard(text, successMsg) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast(successMsg, 'var(--emerald)');
+                    }).catch(() => {
+                        fallbackCopy(text, successMsg);
+                    });
+                } else {
+                    fallbackCopy(text, successMsg);
+                }
+            }
+
+            function fallbackCopy(text, successMsg) {
+                const helper = document.getElementById('clipboardFallback');
+                helper.value = text;
+                helper.select();
+                helper.setSelectionRange(0, text.length);
+                try {
+                    document.execCommand('copy');
+                    showToast(successMsg, 'var(--emerald)');
+                } catch (err) {
+                    showToast('Could not copy automatically. Press Ctrl+C.', 'var(--rose)');
+                }
+            }
+
+            function updateStats() {
+                const val = editor.value;
+                const lines = val.length === 0 ? 0 : val.split('\n').length;
+                editorStats.textContent = `${lines.toLocaleString()} lines • ${val.length.toLocaleString()} chars`;
+            }
+
+            function saveCodeToStorage() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, editor.value);
+                    autoSaveBadge.textContent = 'Auto-Saved';
+                } catch (e) {
+                    autoSaveBadge.textContent = 'Session Only';
+                }
+            }
+
+            function runInlinePreview() {
+                const code = editor.value.trim();
+                previewFrame.srcdoc = code || '<!DOCTYPE html><html><body style="background:#0b101b;color:#64748b;font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0;">Editor is empty — paste HTML5 code to preview.</body></html>';
+            }
+
+            function launchInAboutBlank() {
+                const code = editor.value;
+                if (!code.trim()) {
+                    showToast('Editor is empty! Paste your HTML5 code first.', 'var(--amber)');
+                    editor.focus();
+                    return;
+                }
+
+                try {
+                    const win = window.open('about:blank', '_blank');
+                    if (!win || win.closed || typeof win.closed === 'undefined') {
+                        popupBanner.classList.add('visible');
+                        showToast('Pop-up blocked! See banner above or use Copy data: URL.', 'var(--rose)');
+                        return;
+                    }
+
+                    popupBanner.classList.remove('visible');
+                    win.document.open();
+                    win.document.write(code);
+                    win.document.close();
+                    win.focus();
+                    showToast('Launched in new about:blank tab!', 'var(--emerald)');
+                } catch (err) {
+                    popupBanner.classList.add('visible');
+                    showToast('Browser blocked about:blank access. Try Copy data: URL.', 'var(--rose)');
+                }
+            }
+
+            function copyAsDataUrl() {
+                const code = editor.value;
+                if (!code.trim()) {
+                    showToast('Editor is empty! Paste your HTML5 code first.', 'var(--amber)');
+                    return;
+                }
+                const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(code);
+                copyToClipboard(dataUrl, 'Copied data: URL! Paste it into any new tab address bar.');
+            }
+
+            function downloadUserHtml() {
+                const code = editor.value;
+                if (!code.trim()) {
+                    showToast('Editor is empty! Add some HTML5 code before downloading.', 'var(--amber)');
+                    editor.focus();
+                    return;
+                }
+
+                const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'index.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Downloaded index.html!', 'var(--emerald)');
+            }
+
+            // Initialize editor content from localStorage or starter snippet
+            try {
+                const savedCode = localStorage.getItem(STORAGE_KEY);
+                editor.value = savedCode !== null ? savedCode : STARTER_HTML;
+            } catch (e) {
+                editor.value = STARTER_HTML;
+            }
+
+            updateStats();
+            runInlinePreview();
+
+            // Editor typing, auto-save, Tab indentation & Ctrl/Cmd + Enter shortcut
+            editor.addEventListener('input', () => {
+                updateStats();
+                autoSaveBadge.textContent = 'Saving...';
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(saveCodeToStorage, 250);
+            });
+
+            editor.addEventListener('keydown', (e) => {
+                // Tab key -> insert 2 spaces
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start + 2;
+                    updateStats();
+                    saveCodeToStorage();
+                }
+
+                // Ctrl/Cmd + Enter -> launch directly into about:blank
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    runInlinePreview();
+                    launchInAboutBlank();
+                }
+            });
+
+            // Toolbar Button Bindings
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                editor.value = '';
+                updateStats();
+                saveCodeToStorage();
+                editor.focus();
+                showToast('Editor cleared — ready for your HTML5 code!');
+            });
+
+            document.getElementById('pasteBtn').addEventListener('click', async () => {
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        const clipText = await navigator.clipboard.readText();
+                        if (clipText) {
+                            editor.value = clipText;
+                            updateStats();
+                            saveCodeToStorage();
+                            runInlinePreview();
+                            showToast('Pasted code from clipboard!', 'var(--emerald)');
+                            return;
+                        }
+                    }
+                    throw new Error('Clipboard read unavailable');
+                } catch (err) {
+                    editor.focus();
+                    showToast('Press Ctrl+V (or Cmd+V) to paste your code into the editor.', 'var(--amber)');
+                }
+            });
+
+            document.getElementById('runPreviewBtn').addEventListener('click', () => {
+                if (workspace.classList.contains('preview-collapsed')) {
+                    workspace.classList.remove('preview-collapsed');
+                    document.getElementById('togglePreviewBtn').textContent = 'Hide Preview';
+                    runInlinePreview();
+                    showToast('Live preview opened!', 'var(--accent)');
+                } else {
+                    runInlinePreview();
+                    showToast('Live preview updated!', 'var(--accent)');
+                }
+            });
+
+            document.getElementById('downloadHtmlBtn').addEventListener('click', downloadUserHtml);
+            document.getElementById('copyDataUrlBtn').addEventListener('click', copyAsDataUrl);
+            document.getElementById('bannerCopyDataBtn').addEventListener('click', copyAsDataUrl);
+            document.getElementById('launchBlankBtn').addEventListener('click', launchInAboutBlank);
+
+            document.getElementById('dismissBannerBtn').addEventListener('click', () => {
+                popupBanner.classList.remove('visible');
+            });
+
+            document.getElementById('resetSampleBtn').addEventListener('click', () => {
+                editor.value = STARTER_HTML;
+                updateStats();
+                saveCodeToStorage();
+                runInlinePreview();
+                showToast('Restored starter HTML5 template.');
+            });
+
+            document.getElementById('togglePreviewBtn').addEventListener('click', function () {
+                const collapsed = workspace.classList.toggle('preview-collapsed');
+                this.textContent = collapsed ? 'Show Preview' : 'Hide Preview';
+            });
+        })();
+    </script>
+</body>
+</html>
